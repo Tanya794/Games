@@ -1,0 +1,129 @@
+from random import randint
+
+
+class Cell:
+    def __init__(self):
+        self.value = 0
+
+    def __bool__(self):
+        return self.value == 0
+
+
+class TicTacToe:
+    FREE_CELL = 0  # свободная клетка
+    HUMAN_X = 1  # крестик (игрок - человек)
+    COMPUTER_O = 2  # нолик (игрок - компьютер)
+
+    def __init__(self):
+        self.pole = tuple(tuple(Cell() for _ in range(3)) for _ in range(3))
+        self.__is_human_win = False
+        self.__is_computer_win = False
+        self.__is_draw = False
+
+    @property
+    def is_human_win(self):
+        return self.__is_human_win
+
+    @is_human_win.setter
+    def is_human_win(self, val):
+        self.__is_human_win = val
+
+    @property
+    def is_computer_win(self):
+        return self.__is_computer_win
+
+    @is_computer_win.setter
+    def is_computer_win(self, val):
+        self.__is_computer_win = val
+
+    @property
+    def is_draw(self):
+        return self.__is_draw
+
+    @is_draw.setter
+    def is_draw(self, val):
+        self.__is_draw = val
+
+    def __getitem__(self, item):
+        self.__check_index(item)
+        r, c = item
+        return self.pole[r][c].value
+
+    def __setitem__(self, key, value):
+        self.__check_index(key)
+        r, c = key
+        self.pole[r][c].value = value
+
+        if self.__check_rows(self.HUMAN_X) or self.__check_cols(self.HUMAN_X) or self.__check_diag(self.HUMAN_X):
+            self.is_human_win = True
+
+        if self.__check_rows(self.COMPUTER_O) or self.__check_cols(self.COMPUTER_O) or self.__check_diag(
+                self.COMPUTER_O):
+            self.is_computer_win = True
+
+    @staticmethod
+    def __check_index(indx):
+        r, c = indx
+        if type(r) != int or type(c) != int or not (0 <= r < 3) or not (0 <= c < 3):
+            raise IndexError('некорректно указанные индексы')
+
+    def init(self):
+        for i in range(3):
+            for j in range(3):
+                self[i, j] = self.FREE_CELL
+
+        self.__is_human_win = False
+        self.__is_computer_win = False
+        self.__is_draw = False
+
+    def show(self):
+        for i in range(3):
+            for j in range(3):
+                symb = 'X' if self[i, j] == self.HUMAN_X else 'O' if self[i, j] == self.COMPUTER_O else '*'
+                print(symb, end=' ')
+            print()
+
+    def human_go(self):
+        r, c = map(int, input('Enter your step (e.g. 0 0): ').split())
+        while self[r, c] != self.FREE_CELL:
+            r, c = map(int, input('Enter your step (e.g. 0 0): ').split())
+        self[r, c] = self.HUMAN_X
+
+    def computer_go(self):
+        r = randint(0, 2)
+        c = randint(0, 2)
+        while self[r, c] != self.FREE_CELL:
+            r = randint(0, 2)
+            c = randint(0, 2)
+        self[r, c] = self.COMPUTER_O
+
+    def __bool__(self):
+        if not self.is_human_win and not self.is_computer_win:
+            for row in self.pole:
+                if any(map(lambda x: bool(x), row)):
+                    return True
+
+            self.is_draw = True
+        return False
+
+    def __check_rows(self, val):
+        for row in self.pole:
+            if all(map(lambda x: x.value == val, row)):
+                return True
+        return False
+
+    def __check_cols(self, val):
+        z = zip(*self.pole)
+        for line in z:
+            if all(map(lambda x: x.value == val, line)):
+                return True
+        return False
+
+    def __check_diag(self, val):
+        d1 = [(0, 0), (1, 1), (2, 2)]
+        d2 = [(0, 2), (1, 1), (2, 0)]
+        if all(map(lambda x: self[x] == val, d1)):
+            return True
+        if all(map(lambda x: self[x] == val, d2)):
+            return True
+        return False

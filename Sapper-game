@@ -1,0 +1,93 @@
+from random import randint
+
+
+class GamePole:
+    __instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if cls.__instance is None:
+            cls.__instance = super().__new__(cls)
+
+        return cls.__instance
+
+    def __init__(self, N, M, total_mines):
+        self.__pole_cells = tuple(tuple(Cell() for _ in range(M)) for _ in range(N))
+        self.__n = N
+        self.__m = M
+        self.__total_mines = total_mines
+
+    @property
+    def pole(self):
+        return self.__pole_cells
+
+    def init_pole(self):
+        mines_done = 0
+        while mines_done < self.__total_mines:
+            i = randint(0, self.__n - 1)
+            j = randint(0, self.__m - 1)
+            if not self.__pole_cells[i][j].is_mine:
+                self.__pole_cells[i][j].is_mine = True
+                mines_done += 1
+
+        indx = (-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)
+
+        for n in range(self.__n):
+            for m in range(self.__m):
+                if not self.__pole_cells[n][m].is_mine:
+                    count = sum([self.__pole_cells[n + i][m + j].is_mine for i, j in indx if 
+                                 self.__n > n + i >= 0 and
+                                 self.__m > m + j >= 0])
+                    self.__pole_cells[n][m].number = count
+
+    def open_cell(self, i, j):
+        if i >= self.__n or j >= self.__m:
+            raise IndexError('некорректные индексы i, j клетки игрового поля')
+
+        self.__pole_cells[i][j].is_open = True
+
+    def show_pole(self):        
+        for line in self.__pole_cells:
+            print(*map(lambda cl: "." if cl else "*" if cl.is_mine else cl.number, line))
+
+
+
+class Cell:
+    def __init__(self):
+        self.__is_mine = False
+        self.__number = 0
+        self.__is_open = False
+
+    @property
+    def is_mine(self):
+        return self.__is_mine
+
+    @is_mine.setter
+    def is_mine(self, value):
+        if type(value) != bool:
+            raise ValueError("недопустимое значение атрибута")
+        self.__is_mine = value
+
+    @property
+    def number(self):
+        return self.__number
+
+    @number.setter
+    def number(self, value):
+        if type(value) == int and 0 <= value <= 8:
+            self.__number = value
+        else:
+            raise ValueError("недопустимое значение атрибута")
+
+    @property
+    def is_open(self):
+        return self.__is_open
+
+    @is_open.setter
+    def is_open(self, value):
+        if type(value) != bool:
+            raise ValueError("недопустимое значение атрибута")
+        self.__is_open = value
+
+    def __bool__(self):
+        return not self.__is_open
+
